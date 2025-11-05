@@ -44,17 +44,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
-    # Third party apps
+
+    # Third-party apps
     'rest_framework',
-    'corsheaders',
-    
-    # Local apps
+    'django_filters',  # <-- ADD THIS LINE
+
+    # Your apps
     'accounts',
     'products',
     'cart',
     'orders',
     'payments',
+    'users',
 ]
 
 MIDDLEWARE = [
