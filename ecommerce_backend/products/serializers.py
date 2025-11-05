@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from .models import Category, Product, ProductImage, ProductReview, ProductSpecification
 
+#
+# --- HELPER SERIALIZERS (Must be defined first) ---
+#
+
 class CategorySerializer(serializers.ModelSerializer):
     """Category serializer"""
     products_count = serializers.SerializerMethodField()
@@ -8,7 +12,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'description', 'image', 
-                 'is_active', 'products_count', 'created_at']
+                  'is_active', 'products_count', 'created_at']
         read_only_fields = ['id', 'slug', 'created_at']
     
     def get_products_count(self, obj):
@@ -33,8 +37,12 @@ class ProductReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductReview
         fields = ['id', 'user', 'user_name', 'rating', 'title', 'comment', 
-                 'is_approved', 'created_at', 'updated_at']
+                  'is_approved', 'created_at', 'updated_at']
         read_only_fields = ['id', 'user', 'is_approved', 'created_at', 'updated_at']
+
+#
+# --- MAIN PRODUCT SERIALIZERS (Depend on the ones above) ---
+#
 
 class ProductListSerializer(serializers.ModelSerializer):
     """Product list serializer (for listing products)"""
@@ -48,9 +56,9 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'slug', 'short_description', 'category_name', 
-                 'sku', 'price', 'original_price', 'discount_percentage',
-                 'primary_image', 'average_rating', 'review_count', 
-                 'is_in_stock', 'is_featured', 'created_at']
+                  'sku', 'price', 'original_price', 'discount_percentage',
+                  'primary_image', 'average_rating', 'review_count', 
+                  'is_in_stock', 'is_featured', 'created_at']
     
     def get_primary_image(self, obj):
         primary_image = obj.images.filter(is_primary=True).first()
@@ -72,21 +80,37 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     is_in_stock = serializers.ReadOnlyField()
     is_low_stock = serializers.ReadOnlyField()
     
+    # --- This is the fix we added last time ---
+    primary_image = serializers.SerializerMethodField()
+    
     class Meta:
         model = Product
         fields = ['id', 'name', 'slug', 'description', 'short_description', 
-                 'category', 'sku', 'price', 'original_price', 'discount_percentage',
-                 'stock_quantity', 'weight', 'dimensions', 'brand', 'model_number',
-                 'warranty_period', 'images', 'specifications', 'reviews',
-                 'average_rating', 'review_count', 'is_in_stock', 'is_low_stock',
-                 'is_featured', 'meta_title', 'meta_description', 'created_at']
+                  'category', 'sku', 'price', 'original_price', 'discount_percentage',
+                  
+                  # --- This is the fix we added last time ---
+                  'primary_image', 
+                  
+                  'stock_quantity', 'weight', 'dimensions', 'brand', 'model_number',
+                  'warranty_period', 'images', 'specifications', 'reviews',
+                  'average_rating', 'review_count', 'is_in_stock', 'is_low_stock',
+                  'is_featured', 'meta_title', 'meta_description', 'created_at']
+
+    # --- This is the fix we added last time ---
+    def get_primary_image(self, obj):
+        primary_image = obj.images.filter(is_primary=True).first()
+        if primary_image:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(primary_image.image.url)
+        return None
 
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):
     """Product create/update serializer"""
     class Meta:
         model = Product
         fields = ['name', 'description', 'short_description', 'category', 
-                 'sku', 'price', 'original_price', 'stock_quantity', 
-                 'min_stock_level', 'weight', 'dimensions', 'brand', 
-                 'model_number', 'warranty_period', 'is_active', 'is_featured',
-                 'meta_title', 'meta_description']
+                  'sku', 'price', 'original_price', 'stock_quantity', 
+                  'min_stock_level', 'weight', 'dimensions', 'brand', 
+                  'model_number', 'warranty_period', 'is_active', 'is_featured',
+                  'meta_title', 'meta_description']
